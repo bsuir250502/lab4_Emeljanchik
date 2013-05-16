@@ -1,0 +1,219 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define LENGTH_OF_STRING 20
+#define NUMBER_OF_EVALUATION 1
+#define THE_NUMBER_OF_TREES 1
+#define CHARACTERIZATION_LENGTH 40
+
+typedef struct tree {
+    char sername[LENGTH_OF_STRING];
+    int evaluation[NUMBER_OF_EVALUATION];
+    char city[LENGTH_OF_STRING];
+    char street[LENGTH_OF_STRING];
+    int house_number;
+    char characterization[CHARACTERIZATION_LENGTH];
+    int reservist;
+    struct tree *prev;
+    struct tree *left;
+    struct tree *right;
+} tree_t;
+
+tree_t free_all (tree_t *must_be_free)
+{
+    tree_t *required;
+    required=must_be_free;
+    do {
+        do {
+            if (required->left!=NULL)
+                while (required->left!=NULL)
+                    required=required->left;
+            if (required->right!=NULL)
+                required=required->right;
+        }while (required->left!=NULL || required->right!=NULL);
+        if (required==must_be_free)
+            break;
+        else if (required->prev!=NULL)
+            if (required->prev->left==required) {
+            required=required->prev;
+            free (required->left);
+            required->left=NULL;
+        }
+        else if (required->prev!=NULL)
+            if (required->prev->right==required) {
+            required=required->prev;
+            free (required->right);
+            required->right=NULL;
+        }
+    }while (1);
+    return *must_be_free;
+}
+
+tree_t enter_information (tree_t *tree_required)
+{
+    char char_n[LENGTH_OF_STRING];
+    int i;
+    tree_t *required;
+    required=tree_required;
+    printf ("\nEnter sername: ");
+    fgets (required->sername, LENGTH_OF_STRING, stdin);
+    printf ("\nEnter sity: ");
+    fgets (required->city, LENGTH_OF_STRING, stdin);
+    printf ("\nEnter street: ");
+    fgets (required->street, LENGTH_OF_STRING, stdin);
+    printf ("\nEnter house number: ");
+    fgets (char_n, LENGTH_OF_STRING, stdin);
+    required->house_number=strtol (char_n, NULL, 10);
+    for (i=0; i<NUMBER_OF_EVALUATION; i++) {
+        printf ("\nEnter %d evaluation: ", i+1);
+        fgets (char_n, LENGTH_OF_STRING, stdin);
+        required->evaluation[i]=strtol (char_n, NULL, 10);
+    }
+    printf ("\nEnter characterization: ");
+    fgets (required->characterization, CHARACTERIZATION_LENGTH, stdin);
+    do {
+        printf ("\nEnter reservist:\n(yes - y, no - n) ");
+        fgets (char_n, LENGTH_OF_STRING, stdin);
+        if (char_n[0]=='y') {
+            required->reservist=1;
+            break;
+        }
+        else if (char_n[0]=='n') {
+            required->reservist=0;
+            break;
+        }
+    }while (1);
+    required->prev=NULL;
+    required->left=NULL;
+    required->right=NULL;
+    return *tree_required;
+}
+
+tree_t sozdat_tree (tree_t *tree_pystoe)
+{
+    tree_t *required;
+    required=tree_pystoe;
+    char char_n[LENGTH_OF_STRING];
+    enter_information (required);
+    do {
+        printf ("\nEnter:\nIf add left - l.\nIf add right - r.\nIf return to previosly - p.\nIf enough - q. ");
+        fgets (char_n, LENGTH_OF_STRING, stdin);
+        if (char_n[0]=='l') {
+            if (required->left!=NULL) {
+                printf ("\nError:\nExist");
+                continue;
+            }
+            if (!(required->left=(tree_t*)malloc(sizeof(tree_t)))) {
+                free_all (tree_pystoe);
+                return *tree_pystoe;
+            }
+            enter_information (required->left);
+            required->left->prev=required;
+            required=required->left;
+        }
+        else if (char_n[0]=='r') {
+            if (required->right!=NULL) {
+                printf ("\nError:\nExist");
+                continue;
+            }
+            if (!(required->right=(tree_t*)malloc(sizeof(tree_t)))) {
+                free_all (tree_pystoe);
+                return *tree_pystoe;
+            }
+            enter_information (required->right);
+            required->right->prev=required;
+            required=required->right;
+        }
+        else if (char_n[0]=='p') {
+            if (required==tree_pystoe) {
+                printf ("\nError:\nThis is root!");
+                continue;
+            }
+            required=required->prev;
+        }
+        else if (char_n[0]=='q')
+            break;
+    }while (1);
+    return *tree_pystoe;
+}
+
+tree_t copy_information (tree_t *old, tree_t *copy)
+{
+    int i;
+    for (i=0; i<LENGTH_OF_STRING; i++)
+        copy->sername[i]=old->sername[i];
+    for (i=0; i<NUMBER_OF_EVALUATION; i++)
+        copy->evaluation[i]=old->evaluation[i];
+    for (i=0; i<LENGTH_OF_STRING; i++)
+        copy->city[i]=old->city[i];
+    for (i=0; i<LENGTH_OF_STRING; i++)
+        copy->street[i]=old->street[i];
+    for (i=0; i<CHARACTERIZATION_LENGTH; i++)
+        copy->characterization[i]=old->characterization[i];
+    copy->house_number=old->house_number;
+    copy->reservist=old->reservist;
+    copy->left=NULL;
+    copy->right=NULL;
+    copy->prev=NULL;
+    return *copy;
+}
+
+tree_t copy_tree (tree_t *tree_old, tree_t *tree_copy)
+{
+    tree_t *required;
+    tree_t *required1;
+    required=tree_old;
+    required1=tree_copy;
+    copy_information (tree_old, tree_copy);
+    if (tree_old->left!=NULL || tree_old->right!=NULL)
+        do {
+            if (required->left!=NULL && required1->left==NULL)
+                while (required->left) {
+                    required=required->left; 
+                    if (!(required1->left=(tree_t*)malloc(sizeof(tree_t)))) {
+                        free (required);
+                        free (required1);
+                        free_all (tree_copy);
+                        return *tree_copy;
+                    }
+                    copy_information (required, required1->left);
+                    required1->left->prev=required1;
+                    required1=required1->left;
+                }
+            else if (required->right!=NULL && required1->right==NULL) {
+                required=required->right;
+                if (!(required1->right=(tree_t*)malloc(sizeof(tree_t)))) {
+                    free (required);
+                    free (required1);
+                    free_all (tree_copy);
+                    return *tree_copy;
+                }
+                copy_information (required, required1->right);
+                required1->right->prev=required1;
+                required1=required1->right;
+            }
+            else if (required==tree_old) break;
+            if (required!=tree_old &&
+                (required->right==NULL || (required->right!=NULL && required1->right!=NULL)) &&
+                (required->left==NULL || (required->left!=NULL && required1->left!=NULL))) {
+                    required=required->prev;
+                    required1=required1->prev;
+            }
+        }while (1);
+    return *tree_copy;
+}
+
+int main ()
+{
+    tree_t old[THE_NUMBER_OF_TREES];
+    tree_t copy[THE_NUMBER_OF_TREES];
+    int i;
+    for (i=0; i<THE_NUMBER_OF_TREES; i++)
+        sozdat_tree (&old[i]);
+    for (i=0; i<THE_NUMBER_OF_TREES; i++)
+        copy_tree (&old[i], &copy[i]);
+    for (i=0; i<THE_NUMBER_OF_TREES; i++)
+        free_all (&old[i]);
+    for (i=0; i<THE_NUMBER_OF_TREES; i++)
+        free_all (&copy[i]);
+}
